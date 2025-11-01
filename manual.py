@@ -8,12 +8,14 @@ providing more control and educational insight into the transformer workflow.
 import gradio as gr
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
+from langdetect import detect
 import torch.nn.functional as F
 
 # Load model and tokenizer separately for more control
 model_name = "distilbert/distilbert-base-uncased-finetuned-sst-2-english"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
+translator = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
 
 def sentiment_analyser(text):
     """
@@ -31,6 +33,17 @@ def sentiment_analyser(text):
     Returns:
         str: Formatted result with label and confidence score
     """
+    lang = detect(text)
+
+
+    if lang != 'en':
+      # the language is not english translation it in english
+        result = translator(text)
+        text = result[0]['translation_text']
+
+    else:
+        # text is English language, can stay without translation
+        pass
     # Step 1: Tokenize the input text
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
     

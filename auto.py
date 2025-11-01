@@ -7,14 +7,18 @@ which handles tokenization, model inference, and post-processing automatically.
 
 import gradio as gr
 from transformers import pipeline
+from langdetect import detect
 
 # Load the model using Hugging Face pipeline
 # The pipeline automatically handles:
 # - Tokenization
 # - Model inference
 # - Output processing
+
 classifier = pipeline("text-classification", 
                      model="distilbert/distilbert-base-uncased-finetuned-sst-2-english")
+
+translator = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
 
 def sentiment_analyser(text):
     """
@@ -27,7 +31,17 @@ def sentiment_analyser(text):
         str: Formatted result with label and confidence score
     """
     # The pipeline returns a list of dictionaries
-    result = classifier(text)[0]
+        lang = detect(text)
+
+
+    if lang != 'en':
+      # the language is not english translation it in english
+        result = translator(text)
+        text = result[0]['translation_text']
+
+    else:
+        # text is English language, can stay without translation
+        result = classifier(text)[0]
     
     # Format the output
     return f"Label: {result['label']}, Confidence: {result['score']:.4f}"
